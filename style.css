@@ -1,0 +1,7 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+/* For smooth transitions on UI elements */
+.transition-all {
+    transition: all 0.2s ease-in-out;
+}
