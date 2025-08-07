@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Counter</title>
+    <!-- Chosen Palette: Warm Neutrals (Slate) -->
+    <!-- Application Structure Plan: A single-column, top-to-bottom layout is chosen for its simplicity and mobile-first responsiveness. It consists of three main regions: a fixed header for the app title and primary action (login), a main scrollable content area for the list of counters, and a sticky footer containing the form for adding new counters. This task-oriented structure provides an intuitive user flow, with core content centrally located and primary actions consistently accessible. -->
+    <!-- Visualization & Content Choices: The core data (individual counters) is presented as a list of "cards". Each card acts as a self-contained component displaying the counter's name (label), its current value, and action buttons (+, -, delete). This modular representation is chosen over complex charts because the data is a simple collection of individual counts, and direct manipulation via buttons is the most intuitive interaction. This approach requires only HTML and CSS, avoiding the need for external libraries for this foundational step. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- リアルタイム同期UI -->
+        <section id="sync-section" class="max-w-2xl mx-auto mt-8 mb-8 p-6 bg-white rounded shadow" style="display:none;">
+            <h2 class="text-lg font-bold mb-2">リアルタイム同期</h2>
+            <div class="mb-2 text-xs text-slate-600">
+                複数の端末間でカウントデータをリアルタイム同期できます。データはFirebaseに保存され、どの端末からでも同じデータにアクセスできます。
+            </div>
+            <div class="mb-2 flex gap-2">
+                <span id="sync-status" class="text-xs text-slate-500">未接続</span>
+                <span id="sync-version-info" class="text-xs text-slate-500"></span>
+            </div>
+            <div class="flex gap-2 mb-2">
+                <button id="sync-enable-btn" class="bg-blue-600 hover:bg-blue-700 text-white rounded px-4 py-2 transition-all">同期を有効化</button>
+                <button id="sync-disable-btn" class="bg-slate-500 hover:bg-slate-600 text-white rounded px-4 py-2 transition-all" style="display:none;">同期を無効化</button>
+                <button id="sync-reset-btn" class="bg-red-500 hover:bg-red-600 text-white rounded px-4 py-2 transition-all">データリセット</button>
+            </div>
+            <div id="sync-message" class="text-sm mt-2"></div>
+        </section>
+
+        <!-- ローカルファイル保存UI -->
+        <section id="file-section" class="max-w-2xl mx-auto mt-8 mb-8 p-6 bg-white rounded shadow" style="display:none;">
+            <h2 class="text-lg font-bold mb-2">ローカルファイル保存</h2>
+            <div class="mb-2 text-xs text-slate-600">
+                カウンターデータをローカルファイルとして保存・読み込みできます。データはJSON形式で保存され、他のデバイスやアプリとの共有も可能です。
+            </div>
+            <div class="mb-2 flex gap-2">
+                <span id="file-version-info" class="text-xs text-slate-500"></span>
+            </div>
+            <div class="flex gap-2 mb-2">
+                <button id="file-save-btn" class="bg-green-600 hover:bg-green-700 text-white rounded px-4 py-2 transition-all">ファイルに保存</button>
+                <button id="file-load-btn" class="bg-slate-500 hover:bg-slate-600 text-white rounded px-4 py-2 transition-all">ファイルから読込</button>
+                <input type="file" id="file-input" accept=".json" style="display: none;">
+            </div>
+            <div id="file-message" class="text-sm mt-2"></div>
+        </section>
+
+        <!-- Header Section -->
+        <header class="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-10">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <h1 class="text-xl font-bold text-slate-900">Sync Counter</h1>
+                    <!-- 同期・ファイル保存ボタン -->
+                    <div class="flex gap-2">
+                        <button id="sync-button" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all">
+                            同期
+                        </button>
+                        <button id="file-button" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition-all">
+                            ファイル保存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content: Counter List -->
+        <main class="flex-grow w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div id="counter-list" class="space-y-4">
+                <!-- Counter items will be dynamically inserted here -->
+                <div class="text-center py-12 text-slate-500">
+                    <p>カウンターがありません。</p>
+                    <p class="text-sm">下のフォームから新しいカウンターを追加してください。</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer: Add New Counter Form -->
+        <footer class="bg-white/80 backdrop-blur-lg border-t border-slate-200 sticky bottom-0 z-10">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <form id="add-counter-form" class="flex items-center gap-4">
+                    <input 
+                        type="text" 
+                        id="new-counter-name" 
+                        placeholder="新しいカウンターのラベル名" 
+                        class="flex-grow w-full px-4 py-3 bg-slate-100 border-2 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        required
+                    >
+                    <button type="submit" class="flex-shrink-0 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all p-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase設定
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue, off } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Firebase設定（無料プラン用）
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOZ_OXloaU4IYLBpLj3C7XytB90WpZ2OE",
+            authDomain: "counter-app-demo.firebaseapp.com",
+            databaseURL: "https://counter-app-demo-default-rtdb.firebaseio.com",
+            projectId: "counter-app-demo",
+            storageBucket: "counter-app-demo.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+
+        // Firebase初期化
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // グローバル変数としてFirebase関数を公開
+        window.firebaseDB = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseOnValue = onValue;
+        window.firebaseOff = off;
+    </script>
+
+    <!-- アプリケーションスクリプト -->
+    <script src="app.js"></script>
+
+</body>
+</html>
