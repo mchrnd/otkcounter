@@ -53,14 +53,27 @@ export const firebaseConfig = {
 
 ### 5. セキュリティルールの設定
 
-Realtime Databaseの「ルール」タブで以下のルールを設定：
+学習・ローカル検証のみであれば一時的に以下（全公開）でも動作しますが、本番では使用しないでください。
 
 ```json
 {
   "rules": {
-    "counters": {
-      ".read": true,
-      ".write": true
+    ".read": false,
+    ".write": false
+  }
+}
+```
+
+本番向け（匿名認証ユーザーごとの分離・本人のみ読み書き可）の例：
+
+```json
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
     }
   }
 }
@@ -70,7 +83,7 @@ Realtime Databaseの「ルール」タブで以下のルールを設定：
 
 1. `index.html` をブラウザで開く
 2. カウンターを追加・操作
-3. 「同期」ボタンでFirebase同期を有効化
+3. 「同期」ボタンでFirebase同期を有効化（初回に匿名認証が自動実行されます）
 4. 「ファイル保存」ボタンでローカルファイルに保存
 
 ## 注意事項
@@ -87,4 +100,3 @@ Realtime Databaseの「ルール」タブで以下のルールを設定：
 2. ブラウザのコンソールでエラーメッセージを確認
 3. Realtime Databaseが作成されているか確認
 4. セキュリティルールが適切に設定されているか確認
-

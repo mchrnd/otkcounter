@@ -13,6 +13,7 @@ let editCountId = null;
 // --- Firebase同期状態 ---
 let isSyncEnabled = false;
 let syncListener = null;
+let syncRef = null;
 
 // localStorageからデータを取得
 function loadCounters() {
@@ -178,8 +179,8 @@ async function syncToFirebase() {
             lastUpdated: new Date().toISOString(),
             deviceId: getDeviceId()
         };
-        
-        await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'counters'), data);
+        const uid = window.currentUid || 'public';
+        await window.firebaseSet(window.firebaseRef(window.firebaseDB, `users/${uid}/counters`), data);
         setSyncStatus('データを同期しました');
         if (syncVersionInfo) {
             syncVersionInfo.textContent = `最終同期: ${new Date().toLocaleString()}`;
@@ -198,10 +199,10 @@ async function loadFromFirebase() {
     }
 
     try {
-        const countersRef = window.firebaseRef(window.firebaseDB, 'counters');
-        
+        const uid = window.currentUid || 'public';
+        syncRef = window.firebaseRef(window.firebaseDB, `users/${uid}/counters`);
         // リアルタイムリスナーを設定
-        syncListener = window.firebaseOnValue(countersRef, (snapshot) => {
+        syncListener = window.firebaseOnValue(syncRef, (snapshot) => {
             const data = snapshot.val();
             if (data && data.counters) {
                 // 他のデバイスからの更新を反映
@@ -256,9 +257,10 @@ if (syncDisableBtn) {
         syncEnableBtn.style.display = 'inline-block';
         syncDisableBtn.style.display = 'none';
         
-        if (syncListener && window.firebaseOff) {
-            window.firebaseOff(syncListener);
+        if (syncRef && window.firebaseOff) {
+            window.firebaseOff(syncRef);
             syncListener = null;
+            syncRef = null;
         }
         
         syncStatus.textContent = '未接続';
