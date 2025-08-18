@@ -1,79 +1,86 @@
-# Sync Counter App
+# Sync Counter - ラベル管理型カウンターアプリ
 
-リアルタイム同期機能付きカウンターアプリケーション
+リアルタイム同期機能とラベル管理機能を備えたカウンターアプリケーションです。
 
 ## 機能
 
-- カウンターの追加・削除・編集
-- リアルタイム同期（Firebase Realtime Database）
-- ローカルファイル保存・読み込み
-- レスポンシブデザイン
+### 🔐 認証機能
+- **メール・パスワード認証**: 従来のログイン方式
+- **Google認証**: ソーシャルログイン
+- **ゲストモード**: ログインなしでも使用可能
+- **パスワードリセット**: メール送信によるリセット機能
 
-## Firebase設定手順
+### 🏷️ ラベル管理
+- **カスタムラベル**: 色付きのラベルを作成・管理
+- **カウンター分類**: 複数のラベルをカウンターに適用
+- **視覚的フィルタリング**: ラベルによるカウンターの整理
+
+### 📊 カウンター機能
+- **詳細設定**: 説明、カテゴリ、色、アイコンを設定
+- **リアルタイム編集**: カウンター名と値を直接編集
+- **インクリメント/デクリメント**: +1/-1ボタン
+- **リセット機能**: カウンター値を0にリセット
+
+### ☁️ Firebase統合
+- **リアルタイム同期**: 複数デバイス間でのデータ同期
+- **オフライン対応**: ネットワーク切断時も動作
+- **セキュリティ**: ユーザー別のデータ分離
+- **自動バックアップ**: クラウドへの自動保存
+
+### 💾 ローカル機能
+- **ファイル保存**: JSON形式でのエクスポート
+- **ファイル読み込み**: バックアップからの復元
+- **ローカルストレージ**: ブラウザ内でのデータ保存
+
+## セットアップ
 
 ### 1. Firebaseプロジェクトの作成
 
 1. [Firebase Console](https://console.firebase.google.com/) にアクセス
-2. 「プロジェクトを追加」をクリック
-3. プロジェクト名を入力（例：「counter-app-demo」）
-4. Google Analyticsの設定（オプション）
-5. 「プロジェクトを作成」をクリック
+2. 新しいプロジェクトを作成
+3. Webアプリを追加
+4. 認証機能を有効化（メール・パスワード、Google）
+5. Firestore Databaseを作成
 
-### 2. Realtime Databaseの設定
+### 2. 設定ファイルの更新
 
-1. Firebaseコンソールで「Realtime Database」を選択
-2. 「データベースを作成」をクリック
-3. セキュリティルールを「テストモードで開始」に設定
-4. リージョンを選択（推奨：asia-northeast1）
-
-### 3. Webアプリの追加
-
-1. Firebaseコンソールで「プロジェクト設定」（⚙️アイコン）をクリック
-2. 「全般」タブで「アプリを追加」→「Web」を選択
-3. アプリ名を入力（例：「Counter App」）
-4. 「アプリを登録」をクリック
-
-### 4. 設定ファイルの更新
-
-1. `firebase-config.js` ファイルを開く
-2. Firebaseコンソールで表示された設定オブジェクトをコピー
-3. `firebaseConfig` オブジェクトの値を実際の設定に置き換える
+`firebase-config.js` を編集して、Firebaseプロジェクトの設定を追加：
 
 ```javascript
-export const firebaseConfig = {
-    apiKey: "実際のAPIキー",
-    authDomain: "実際のプロジェクトID.firebaseapp.com",
-    databaseURL: "https://実際のプロジェクトID-default-rtdb.firebaseio.com",
-    projectId: "実際のプロジェクトID",
-    storageBucket: "実際のプロジェクトID.appspot.com",
-    messagingSenderId: "実際のSenderID",
-    appId: "実際のAppID"
+const firebaseConfig = {
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
 };
 ```
 
-### 5. セキュリティルールの設定
+### 3. セキュリティルールの設定
 
-学習・ローカル検証のみであれば一時的に以下（全公開）でも動作しますが、本番では使用しないでください。
+Firestore Databaseのセキュリティルールを設定：
 
-```json
-{
-  "rules": {
-    ".read": false,
-    ".write": false
-  }
-}
-```
-
-本番向け（匿名認証ユーザーごとの分離・本人のみ読み書き可）の例：
-
-```json
-{
-  "rules": {
-    "users": {
-      "$uid": {
-        ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid"
-      }
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    match /counters/{counterId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId;
+    }
+    
+    match /labels/{labelId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId;
     }
   }
 }
@@ -81,22 +88,63 @@ export const firebaseConfig = {
 
 ## 使用方法
 
-1. `index.html` をブラウザで開く
-2. カウンターを追加・操作
-3. 「同期」ボタンでFirebase同期を有効化（初回に匿名認証が自動実行されます）
-4. 「ファイル保存」ボタンでローカルファイルに保存
+### 基本操作
 
-## 注意事項
+1. **カウンター追加**: 下部のフォームでカウンター名を入力
+2. **詳細設定**: 「詳細設定を表示」で説明、カテゴリ、ラベルを設定
+3. **カウント操作**: +1/-1ボタンで値を変更
+4. **直接編集**: 「編集」ボタンで値を直接入力
 
-- Firebase設定を正しく行わないと同期機能が動作しません
-- テストモードのセキュリティルールは本番環境では使用しないでください
-- 無料プランの使用制限にご注意ください
+### ラベル管理
 
-## トラブルシューティング
+1. **ラベル作成**: 「ラベル」ボタンでラベル管理画面を開く
+2. **色設定**: カラーピッカーでラベルの色を選択
+3. **カウンターに適用**: カウンター作成時にラベルを選択
 
-### 同期が動作しない場合
+### 認証機能
 
-1. Firebase設定が正しく設定されているか確認
-2. ブラウザのコンソールでエラーメッセージを確認
-3. Realtime Databaseが作成されているか確認
-4. セキュリティルールが適切に設定されているか確認
+1. **アカウント作成**: 「アカウント」ボタンで認証画面を開く
+2. **ログイン**: メール・パスワードまたはGoogleでログイン
+3. **データ同期**: ログイン後、自動的にFirebaseと同期
+
+## ファイル構成
+
+```
+otkcounter/
+├── index.html          # メインHTMLファイル
+├── app.js              # アプリケーションロジック
+├── firebase-config.js  # Firebase設定
+├── firebase_integration.js # Firebase統合機能
+├── style.css           # スタイルシート
+└── README.md           # このファイル
+```
+
+## 技術仕様
+
+- **フロントエンド**: HTML5, CSS3, JavaScript (ES6+)
+- **UIフレームワーク**: Tailwind CSS
+- **バックエンド**: Firebase (Authentication, Firestore)
+- **リアルタイム通信**: Firebase Realtime Database
+- **オフライン対応**: Service Worker (将来実装予定)
+
+## ライセンス
+
+MIT License
+
+## 貢献
+
+プルリクエストやイシューの報告を歓迎します。
+
+## 更新履歴
+
+### v2.0.0
+- Firebase統合機能を追加
+- 認証機能を実装
+- ラベル管理機能を追加
+- カウンター詳細設定を追加
+- UI/UXを大幅に改善
+
+### v1.0.0
+- 基本的なカウンター機能
+- ローカルファイル保存
+- リアルタイム同期（Firebase Realtime Database）

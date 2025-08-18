@@ -18,6 +18,74 @@
 <body class="bg-slate-50 text-slate-800">
 
     <div id="app" class="min-h-screen flex flex-col">
+        <!-- 認証UI -->
+        <section id="auth-section" class="max-w-2xl mx-auto mt-8 mb-8 p-6 bg-white rounded shadow" style="display:none;">
+            <h2 class="text-lg font-bold mb-4">アカウント管理</h2>
+            
+            <!-- ログイン状態 -->
+            <div id="auth-status" class="mb-4 p-3 bg-slate-100 rounded">
+                <div id="auth-user-info" style="display:none;">
+                    <p class="text-sm text-slate-600">ログイン中: <span id="user-email"></span></p>
+                    <button id="sign-out-btn" class="mt-2 bg-red-500 hover:bg-red-600 text-white rounded px-3 py-1 text-sm transition-all">ログアウト</button>
+                </div>
+                <div id="auth-guest-info">
+                    <p class="text-sm text-slate-600">ゲストユーザーとして使用中</p>
+                    <button id="sign-in-btn" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white rounded px-3 py-1 text-sm transition-all">ログイン</button>
+                </div>
+            </div>
+
+            <!-- ログインフォーム -->
+            <div id="login-form" class="mb-4 p-4 bg-slate-50 rounded" style="display:none;">
+                <h3 class="text-md font-semibold mb-3">ログイン</h3>
+                <form id="sign-in-form" class="space-y-3">
+                    <input type="email" id="login-email" placeholder="メールアドレス" class="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" id="login-password" placeholder="パスワード" class="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="flex gap-2">
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white rounded px-4 py-2 transition-all">ログイン</button>
+                        <button type="button" id="sign-up-btn" class="bg-green-500 hover:bg-green-600 text-white rounded px-4 py-2 transition-all">新規登録</button>
+                    </div>
+                </form>
+                <div class="mt-3">
+                    <button id="google-signin-btn" class="w-full bg-white border border-slate-300 text-slate-700 rounded px-4 py-2 hover:bg-slate-50 transition-all">Googleでログイン</button>
+                </div>
+                <button id="forgot-password-btn" class="mt-2 text-sm text-blue-500 hover:text-blue-600">パスワードを忘れた場合</button>
+            </div>
+
+            <!-- 新規登録フォーム -->
+            <div id="signup-form" class="mb-4 p-4 bg-slate-50 rounded" style="display:none;">
+                <h3 class="text-md font-semibold mb-3">新規登録</h3>
+                <form id="sign-up-form" class="space-y-3">
+                    <input type="text" id="signup-displayname" placeholder="表示名" class="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="email" id="signup-email" placeholder="メールアドレス" class="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" id="signup-password" placeholder="パスワード（6文字以上）" class="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="flex gap-2">
+                        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white rounded px-4 py-2 transition-all">登録</button>
+                        <button type="button" id="back-to-login-btn" class="bg-slate-500 hover:bg-slate-600 text-white rounded px-4 py-2 transition-all">戻る</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="auth-message" class="text-sm mt-2"></div>
+        </section>
+
+        <!-- ラベル管理UI -->
+        <section id="label-section" class="max-w-2xl mx-auto mt-8 mb-8 p-6 bg-white rounded shadow" style="display:none;">
+            <h2 class="text-lg font-bold mb-4">ラベル管理</h2>
+            <div class="mb-4">
+                <form id="add-label-form" class="flex gap-2">
+                    <input type="text" id="new-label-name" placeholder="新しいラベル名" class="flex-grow px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="color" id="new-label-color" value="#4CAF50" class="w-12 h-10 border border-slate-300 rounded">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white rounded px-4 py-2 transition-all">追加</button>
+                </form>
+            </div>
+            <div class="text-sm text-slate-600 mb-4">
+                ラベルを作成してカウンターを整理できます。カウンター作成時や編集時にラベルを選択できます。
+            </div>
+            <div id="label-list" class="space-y-2">
+                <!-- ラベル一覧がここに表示されます -->
+            </div>
+        </section>
+
         <!-- リアルタイム同期UI -->
         <section id="sync-section" class="max-w-2xl mx-auto mt-8 mb-8 p-6 bg-white rounded shadow" style="display:none;">
             <h2 class="text-lg font-bold mb-2">リアルタイム同期</h2>
@@ -58,8 +126,14 @@
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <h1 class="text-xl font-bold text-slate-900">Sync Counter</h1>
-                    <!-- 同期・ファイル保存ボタン -->
+                    <!-- 機能ボタン -->
                     <div class="flex gap-2">
+                        <button id="auth-button" class="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75 transition-all">
+                            アカウント
+                        </button>
+                        <button id="label-button" class="px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-75 transition-all">
+                            フォルダー
+                        </button>
                         <button id="sync-button" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all">
                             同期
                         </button>
@@ -85,18 +159,42 @@
         <!-- Footer: Add New Counter Form -->
         <footer class="bg-white/80 backdrop-blur-lg border-t border-slate-200 sticky bottom-0 z-10">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <form id="add-counter-form" class="flex items-center gap-4">
-                    <input 
-                        type="text" 
-                        id="new-counter-name" 
-                        placeholder="新しいカウンターのラベル名" 
-                        class="flex-grow w-full px-4 py-3 bg-slate-100 border-2 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        required
-                    >
-                    <button type="submit" class="flex-shrink-0 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all p-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
+                <form id="add-counter-form" class="space-y-4">
+                    <!-- 基本情報 -->
+                    <div class="flex items-center gap-4">
+                        <input 
+                            type="text" 
+                            id="new-counter-name" 
+                            placeholder="新しいカウンターの名前" 
+                            class="flex-grow w-full px-4 py-3 bg-slate-100 border-2 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            required
+                        >
+                        <button type="submit" class="flex-shrink-0 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all p-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- 詳細設定（展開可能） -->
+                    <div id="counter-details" class="space-y-3" style="display:none;">
+                        <input 
+                            type="text" 
+                            id="new-counter-description" 
+                            ラベル管理                            placeholder="説明（オプション）" 
+                            class="w-full px-4 py-2 bg-slate-100 border-2 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        >
+                        <div id="label-selection" class="space-y-2">
+                            <label class="text-sm font-medium text-slate-700">ラベル（複数選択可）:</label>
+                            <div id="available-labels" class="flex flex-wrap gap-2">
+                                <!-- 利用可能なラベルがここに表示されます -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 詳細設定の展開/折りたたみボタン -->
+                    <button type="button" id="toggle-details-btn" class="text-sm text-blue-500 hover:text-blue-600">
+                        詳細設定を表示
                     </button>
                 </form>
             </div>
@@ -104,34 +202,43 @@
 
     </div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase統合スクリプト -->
     <script type="module">
-        // Firebase設定ファイルを読み込み
-        import { firebaseConfig } from './firebase-config.js';
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, set, onValue, off } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-
-        // Firebase初期化
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const auth = getAuth(app);
-
-        // グローバル変数としてFirebase関数を公開
-        window.firebaseDB = database;
-        window.firebaseRef = ref;
-        window.firebaseSet = set;
-        window.firebaseOnValue = onValue;
-        window.firebaseOff = off;
-
-        // 匿名認証でサインインし、UIDを公開
-        onAuthStateChanged(auth, (user) => {
+        // Firebase統合機能を読み込み
+        import firebaseService from './firebase_integration.js';
+        
+        // グローバル変数としてFirebaseサービスを公開
+        window.firebaseService = firebaseService;
+        
+        // 認証状態の監視を開始
+        firebaseService.onAuthStateChanged((user) => {
             if (user) {
-                window.currentUid = user.uid;
+                console.log('ユーザーがログインしました:', user.email);
+                // カウンターデータを購読
+                firebaseService.subscribeToCounters((result) => {
+                    if (result.success) {
+                        console.log('カウンターデータ:', result.data);
+                        // アプリケーションでカウンターデータを更新
+                        if (window.updateCounterList) {
+                            window.updateCounterList(result.data);
+                        }
+                    }
+                });
+                
+                // ラベルデータを購読
+                firebaseService.subscribeToLabels((result) => {
+                    if (result.success) {
+                        console.log('ラベルデータ:', result.data);
+                        // アプリケーションでラベルデータを更新
+                        if (window.updateLabelList) {
+                            window.updateLabelList(result.data);
+                        }
+                    }
+                });
+            } else {
+                console.log('ユーザーがログアウトしました');
             }
         });
-        // サインイン開始（失敗してもアプリは動作継続）
-        signInAnonymously(auth).catch((e) => console.error('Anonymous sign-in failed', e));
     </script>
 
     <!-- アプリケーションスクリプト -->
