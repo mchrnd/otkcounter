@@ -51,19 +51,31 @@ function updateAuthUI(user) {
         authGuestInfo.style.display = 'none';
         userEmail.textContent = user.email || 'ゲストユーザー';
         
+        // 自動で同期状態に切り替え
+        isSyncEnabled = true;
+        
         // Firebaseからデータを購読開始
         if (window.firebaseService) {
             window.firebaseService.subscribeToCounters(handleCounterUpdate);
             window.firebaseService.subscribeToLabels(handleLabelUpdate);
         }
+        
+        // 同期状態の変更をユーザーに通知
+        showMessage('Firebase同期が有効になりました');
     } else {
         // ログアウト状態
         authUserInfo.style.display = 'none';
         authGuestInfo.style.display = 'block';
         
+        // 同期状態を無効に切り替え
+        isSyncEnabled = false;
+        
         // ローカルデータを読み込み
         loadCounters();
         renderCounters();
+        
+        // 同期状態の変更をユーザーに通知
+        showMessage('ローカルモードに切り替わりました');
     }
 }
 
@@ -241,7 +253,7 @@ if (addLabelForm) {
             });
             if (result.success) {
                 newLabelName.value = '';
-                showMessage('フォルダーを追加しました');
+                showMessage('ラベルを追加しました');
             } else {
                 showMessage(result.error, true);
             }
@@ -266,7 +278,7 @@ function deleteLabel(labelId) {
     if (window.firebaseService && currentUser) {
         window.firebaseService.deleteLabel(labelId).then(result => {
             if (result.success) {
-                showMessage('フォルダーを削除しました');
+                showMessage('ラベルを削除しました');
             } else {
                 showMessage(result.error, true);
             }
